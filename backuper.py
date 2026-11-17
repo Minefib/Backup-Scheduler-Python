@@ -6,6 +6,13 @@ import os
 from datetime import datetime
 
 
+def backup_file(mainfile, backupfolder):
+     backupfile = os.path.basename(mainfile)
+     stamp = f"{datetime.now():%d-%m-%Y_%H-%M-%S}"
+     fullpath = os.path.join(backupfolder, f"{stamp}_{backupfile}")
+     shutil.copy2(mainfile, fullpath)
+     return fullpath
+
 def filebackup():
     mainfile = input("Enter the path of the file to back up: ")
     backupfolder = input("Enter the folder to save backups in: ")
@@ -18,13 +25,8 @@ def filebackup():
         sys.exit(f"Error: the folder '{backupfolder}' does not exist!")
     else:
         def backupcopy():
-            backupfile = os.path.basename(mainfile)
-            stamp = f"{datetime.now():%d-%m-%Y_%H-%M-%S}"
-            newname = f"{stamp}_{backupfile}"
-            fullpath = os.path.join(backupfolder, newname)
-            
             try:
-                shutil.copy2(mainfile, fullpath)
+                fullpath = backup_file(mainfile, backupfolder)
                 print(f"Backed up to {fullpath}")
             except OSError as e:
                 print(f"Backup failed: {e}")
@@ -32,6 +34,15 @@ def filebackup():
 
         schedule.every(15).seconds.do(backupcopy)
 
+def backup_dir(maindir, askdir):
+    name = os.path.basename(os.path.normpath(maindir))
+    stamp = f"{datetime.now():%d-%m-%Y_%H-%M-%S}"
+    newname = f"{stamp}_{name}"
+    fullpath = os.path.join(askdir, newname)
+    shutil.copytree(maindir, fullpath)
+    return fullpath
+
+    
 def dirbackup():
     maindir = input("Enter the path of the folder to back up: ")
     askdir = input("Enter the folder to save backups in: ")
@@ -44,14 +55,8 @@ def dirbackup():
         sys.exit("Error: the backup folder cannot be inside the folder you are backing up!")
     else:
          def backupcopy():
-            name = os.path.basename(os.path.normpath(maindir))
-            stamp = f"{datetime.now():%d-%m-%Y_%H-%M-%S}"
-            newname = f"{stamp}_{name}"
-            fullpath = os.path.join(askdir, newname)
-
-            
             try:
-                shutil.copytree(maindir, fullpath, dirs_exist_ok=True)
+                fullpath = backup_dir(maindir, askdir)
                 print(f"Backed up to {fullpath}")
             except OSError as e:
                 print(f"Backup failed: {e}")
@@ -59,22 +64,24 @@ def dirbackup():
 
          schedule.every(15).seconds.do(backupcopy)
 
-userchoose = input("Back up a file (1) or a folder (2)? ")
 
-if userchoose == "1":
-        filebackup()
-elif userchoose == "2":
-        dirbackup()
-else:
-    sys.exit(f"Error: please enter 1 or 2!")
+if __name__ == "__main__":
+    userchoose = input("Back up a file (1) or a folder (2)? ")
 
-print("Backup running. Press Ctrl+C to stop.")
-try:
-    while True:
-            schedule.run_pending()
-            time.sleep(1)
-except KeyboardInterrupt:
-    print("Backup stopped.")
+    if userchoose == "1":
+            filebackup()
+    elif userchoose == "2":
+            dirbackup()
+    else:
+        sys.exit(f"Error: please enter 1 or 2!")
+
+    print("Backup running. Press Ctrl+C to stop.")
+    try:
+        while True:
+                schedule.run_pending()
+                time.sleep(1)
+    except KeyboardInterrupt:
+        print("Backup stopped.")
 
 
         
